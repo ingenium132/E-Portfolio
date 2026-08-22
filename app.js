@@ -1,67 +1,327 @@
-(() => {
-    fetch('data.json')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('about-text').textContent = data.about;
-        })
-        .catch(err => console.error('Error loading portfolio data:', err));
-})();
-
-(() => {
-    const track = document.querySelector('.carousel-track');
-    const cards = document.querySelectorAll('.carousel-card');
-    const dotsContainer = document.querySelector('.carousel-dots');
-    let currentIndex = 0;
-    const intervalTime = 3000;
-
-    // build dots dynamically based on number of cards
-    cards.forEach((_, index) => {
-        const dot = document.createElement('button');
-        if (index === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => {
-            currentIndex = index;
-            goToSlide(currentIndex);
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const bigint = parseInt(clean.length === 3
+    ? clean.split("").map((c) => c + c).join("")
+    : clean, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
+}
+ 
+const FALLBACK_TINT = "#FFA67A";
+ 
+const state = {
+  activeIndex: 0,
+  cards: [],
+  dots: [],
+  dragging: false,
+  dragStartX: 0,
+  dragDelta: 0,
+};
+ 
+document.addEventListener("DOMContentLoaded", init);
+ 
+async function init() {
+  try {
+    const data = await fetch("data.json").then((res) => {
+      if (!res.ok) throw new Error("data.json not found (status " + res.status + ")");
+      return res.json();
+    });
+ 
+    if (data.site && data.site.title) document.title = data.site.title;
+    populateAbout(data.about);
+    populateMembers(data.members || []);
+    populateAlbums(data.albums);
+    populateContacts(data.contacts);
+    setupCarousel();
+    setupNavHighlighting();
+  } catch (err) {
+    console.error(err);
+    const aboutText = document.getElementById("about-text");
+    if (aboutText) {
+      aboutText.textContent =
+        "Couldn't load data.json — if you opened this file directly, run it through a local server instead.";
+    }
+  }
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* About                                                                   */
+/* ---------------------------------------------------------------------- */
+ 
+function populateAbout(about = {}) {
+  const el = document.getElementById("about-text");
+  if (el) el.textContent = about.text || "";
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Members — augment the existing .carousel-card markup                   */
+/* ---------------------------------------------------------------------- */
+ 
+function populateMembers(members) {
+  const cards = document.querySelectorAll(".carousel-card");
+ 
+  cards.forEach((card, i) => {
+    const nameEl = card.querySelector("h3");
+    const name = nameEl ? nameEl.textContent.trim() : "";
+    const info = members.find((m) => m.name === name) || {};
+    const tint = info.color || FALLBACK_TINT;
+    card.style.setProperty("--tint", tint);
+    card.style.setProperty("--tint-rgb", hexToRgb(tint));
+ 
+    if (info.fullName && nameEl) nameEl.textContent = info.fullName;
+ 
+    const bar = document.createElement("div");
+    bar.className = "card-accent";
+    card.insertBefore(bar, card.firstChild);
+ 
+    if (info.role) {
+      const role = document.createElement("p");
+      role.className = "card-role";
+      role.textContent = info.role;
+      card.appendChild(role);
+    }
+ 
+    if (info.tagline) {
+      const tagline = document.createElement("p");
+      tagline.className = "card-tagline";
+      tagline.textContent = info.tagline;
+      card.appendChild(tagline);
+    }
+ 
+    if (info.link) {
+      card.style.cursor = "pointer";
+      card.addEventListener("click", () => {
+        if (i === state.activeIndex) window.location.href = info.link;
+      });
+    }
+  });
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Albums                                                                  */
+/* ---------------------------------------------------------------------- */
+ 
+function populateAlbums(albums = {}) {
+  const section = document.getElementById("albums");
+  if (!section) return;
+ 
+  if (albums.intro) {
+    const intro = document.createElement("p");
+    intro.id = "albums-intro";
+    intro.textContent = albums.intro;
+    section.querySelector("h2").insertAdjacentElement("afterend", intro);
+  }
+ 
+  const grid = document.createElement("div");
+  grid.className = "albums-grid";
+  const items = albums.items && albums.items.length ? albums.items : Array(4).fill(null);
+  items.forEach((item, i) => {
+    const cell = document.createElement("div");
+    cell.className = "album-placeholder";
+    cell.textContent = item ? item.title : `Album ${i + 1} — coming soon`;
+    grid.appendChild(cell);
+  });
+  section.appendChild(grid);
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Contacts                                                                 */
+/* ---------------------------------------------------------------------- */
+ 
+function populateContacts(contacts = {}) {
+  const section = document.getElementById("contacts");
+  if (!section) return;
+ 
+  const card = document.createElement("div");
+  card.className = "contacts-card";
+ 
+  if (contacts.intro) {
+    const intro = document.createElement("p");
+    intro.id = "contacts-intro";
+    intro.textContent = contacts.intro;
+    card.appendChild(intro);
+  }
+ 
+  if (contacts.email) {
+    const email = document.createElement("a");
+    email.className = "contact-email";
+    email.href = `mailto:${contacts.email}`;
+    email.textContent = contacts.email;
+    card.appendChild(email);
+  }
+ 
+  if (contacts.socials && contacts.socials.length) {
+    const list = document.createElement("ul");
+    list.className = "contact-socials";
+    contacts.socials.forEach((s) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = s.url;
+      a.textContent = s.label;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+    card.appendChild(list);
+  }
+ 
+  section.appendChild(card);
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Carousel — glass coverflow                                              */
+/* ---------------------------------------------------------------------- */
+ 
+function setupCarousel() {
+  const track = document.querySelector(".carousel-track");
+  const dotsWrap = document.querySelector(".carousel-dots");
+  if (!track || !dotsWrap) return;
+ 
+  state.cards = Array.from(track.querySelectorAll(".carousel-card"));
+  const total = state.cards.length;
+ 
+  // Prev / next buttons
+  const controls = document.createElement("div");
+  controls.className = "carousel-controls";
+ 
+  const prevBtn = makeNavButton("prev", "Previous member",
+    '<path d="M15 18l-6-6 6-6"/>');
+  const nextBtn = makeNavButton("next", "Next member",
+    '<path d="M9 18l6-6-6-6"/>');
+ 
+  controls.appendChild(prevBtn);
+  const dotsMount = document.createElement("div");
+  dotsMount.className = "carousel-dots";
+  controls.appendChild(dotsMount);
+  controls.appendChild(nextBtn);
+ 
+  dotsWrap.replaceWith(controls);
+ 
+  state.dots = state.cards.map((_, i) => {
+    const dot = document.createElement("button");
+    dot.className = "dot";
+    dot.setAttribute("aria-label", `Go to member ${i + 1}`);
+    dot.addEventListener("click", () => goTo(i));
+    dotsMount.appendChild(dot);
+    return dot;
+  });
+ 
+  prevBtn.addEventListener("click", () => goTo(state.activeIndex - 1));
+  nextBtn.addEventListener("click", () => goTo(state.activeIndex + 1));
+ 
+  document.addEventListener("keydown", (e) => {
+    if (!isInMembersView()) return;
+    if (e.key === "ArrowLeft") goTo(state.activeIndex - 1);
+    if (e.key === "ArrowRight") goTo(state.activeIndex + 1);
+  });
+ 
+  track.addEventListener("pointerdown", (e) => {
+    state.dragging = true;
+    state.dragStartX = e.clientX;
+    state.dragDelta = 0;
+  });
+  track.addEventListener("pointermove", (e) => {
+    if (!state.dragging) return;
+    state.dragDelta = e.clientX - state.dragStartX;
+  });
+  window.addEventListener("pointerup", () => {
+    if (!state.dragging) return;
+    state.dragging = false;
+    const threshold = 50;
+    if (state.dragDelta > threshold) goTo(state.activeIndex - 1);
+    else if (state.dragDelta < -threshold) goTo(state.activeIndex + 1);
+    state.dragDelta = 0;
+  });
+ 
+  state.total = total;
+  updateCarousel();
+}
+ 
+function makeNavButton(dir, label, iconPath) {
+  const btn = document.createElement("button");
+  btn.className = "nav-btn";
+  btn.dataset.dir = dir;
+  btn.setAttribute("aria-label", label);
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;
+  return btn;
+}
+ 
+function goTo(index) {
+  const total = state.total;
+  state.activeIndex = ((index % total) + total) % total;
+  updateCarousel();
+}
+ 
+function updateCarousel() {
+  const total = state.total;
+  state.cards.forEach((card, i) => {
+    let offset = i - state.activeIndex;
+    if (offset > total / 2) offset -= total;
+    if (offset < -total / 2) offset += total;
+ 
+    const abs = Math.abs(offset);
+    const isActive = offset === 0;
+    card.classList.toggle("is-active", isActive);
+ 
+    if (abs > 2) {
+      card.style.opacity = "0";
+      card.style.pointerEvents = "none";
+      return;
+    }
+ 
+    const x = offset * 60;
+    const scale = 1 - abs * 0.16;
+    const rotate = offset * -10;
+    const z = -abs * 120;
+    const blur = abs === 0 ? 0 : 1.5 * abs;
+    const opacity = abs === 0 ? 1 : abs === 1 ? 0.65 : 0.35;
+ 
+    card.style.opacity = String(opacity);
+    card.style.pointerEvents = isActive ? "auto" : "none";
+    card.style.zIndex = String(10 - abs);
+    card.style.filter = blur ? `blur(${blur}px)` : "none";
+    card.style.transform =
+      `translate(-50%, -50%) translateX(${x}%) translateZ(${z}px) rotateY(${rotate}deg) scale(${scale})`;
+    card.style.position = "absolute";
+    card.style.left = "50%";
+    card.style.top = "50%";
+  });
+ 
+  state.dots.forEach((dot, i) => dot.classList.toggle("is-active", i === state.activeIndex));
+}
+ 
+function isInMembersView() {
+  const section = document.getElementById("members");
+  if (!section) return false;
+  const rect = section.getBoundingClientRect();
+  return rect.top < window.innerHeight * 0.6 && rect.bottom > window.innerHeight * 0.4;
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Nav active-state highlighting on scroll                                 */
+/* ---------------------------------------------------------------------- */
+ 
+function setupNavHighlighting() {
+  const links = Array.from(document.querySelectorAll(".navigation-items"));
+  const sections = links
+    .map((link) => document.querySelector(link.getAttribute("href")))
+    .filter(Boolean);
+ 
+  if (!("IntersectionObserver" in window) || sections.length === 0) return;
+ 
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const id = `#${entry.target.id}`;
+        links.forEach((link) => {
+          link.classList.toggle("is-active", link.getAttribute("href") === id);
         });
-        dotsContainer.appendChild(dot);
-    });
-    const dots = document.querySelectorAll('.carousel-dots button');
-
-    function goToSlide(index) {
-        cards[index].scrollIntoView({
-            behavior: 'smooth',
-            inline: 'center',
-            block: 'nearest'
-        });
-        updateDots(index);
-    }
-
-    function updateDots(index) {
-        dots.forEach(dot => dot.classList.remove('active'));
-        dots[index].classList.add('active');
-    }
-
-    function nextSlide() {
-        currentIndex = (currentIndex + 1) % cards.length;
-        goToSlide(currentIndex);
-    }
-
-    let autoplay = setInterval(nextSlide, intervalTime);
-
-    // pause on hover
-    track.addEventListener('mouseenter', () => clearInterval(autoplay));
-    track.addEventListener('mouseleave', () => {
-        autoplay = setInterval(nextSlide, intervalTime);
-    });
-
-    // pause briefly if user manually scrolls
-    let isUserScrolling;
-    track.addEventListener('scroll', () => {
-        clearInterval(autoplay);
-        clearTimeout(isUserScrolling);
-        isUserScrolling = setTimeout(() => {
-            autoplay = setInterval(nextSlide, intervalTime);
-        }, 4000);
-    });
-})();
-
-(() => {})()
+      });
+    },
+    { rootMargin: "-40% 0px -55% 0px", threshold: 0 }
+  );
+ 
+  sections.forEach((section) => observer.observe(section));
+}
