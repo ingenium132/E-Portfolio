@@ -12,7 +12,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#E2725B"
+      "color": "#E2725B",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Dela Cruz",
@@ -20,7 +22,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#F0B23D"
+      "color": "#F0B23D",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Eclipse",
@@ -28,7 +32,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#F2609C"
+      "color": "#F2609C",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Marcial",
@@ -36,7 +42,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#1B2B6B"
+      "color": "#1B2B6B",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Pinaroc",
@@ -44,7 +52,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#8B6EF2"
+      "color": "#8B6EF2",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Pimentel (Jacob)",
@@ -52,7 +62,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C"
+      "color": "#54545C",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Pimentel (Josh)",
@@ -60,7 +72,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C"
+      "color": "#54545C",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Reyes",
@@ -68,7 +82,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C"
+      "color": "#54545C",
+      "photo": "",
+      "cvUrl": ""
     },
     {
       "name": "Velasquez",
@@ -76,7 +92,9 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#E2725B"
+      "color": "#E2725B",
+      "photo": "",
+      "cvUrl": ""
     }
   ],
   "albums": {

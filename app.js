@@ -11,6 +11,107 @@ function hexToRgb(hex) {
  
 const FALLBACK_TINT = "#FFA67A";
  
+function initials(name = "") {
+  return name
+    .replace(/[(),]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
+ 
+function cvIconSvg() {
+  return `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 1.5v9M8 10.5 4.8 7.3M8 10.5l3.2-3.2"/>
+    <path d="M2 12v1.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V12"/>
+  </svg>`;
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Theme — light/dark toggle, persisted in localStorage                    */
+/* ---------------------------------------------------------------------- */
+ 
+const THEME_KEY = "ingenium-theme";
+ 
+const SUN_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="4.2"/>
+  <path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+</svg>`;
+ 
+const MOON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+</svg>`;
+ 
+function getPreferredTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch (err) {
+    console.warn("localStorage unavailable, falling back to system preference", err);
+  }
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+ 
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const toggle = document.getElementById("theme-toggle");
+  if (toggle) {
+    toggle.innerHTML = theme === "light" ? MOON_ICON : SUN_ICON;
+    toggle.setAttribute(
+      "aria-label",
+      theme === "light" ? "Switch to dark mode" : "Switch to light mode"
+    );
+  }
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (err) {
+    console.warn("Could not save theme preference to localStorage", err);
+  }
+}
+ 
+function setupTheme() {
+  applyTheme(getPreferredTheme());
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle) return;
+  toggle.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "light" ? "dark" : "light");
+  });
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Ambient background parallax — subtle cursor-follow interactivity        */
+/* ---------------------------------------------------------------------- */
+ 
+function setupParallax() {
+  const ambient = document.querySelector(".ambient");
+  if (!ambient) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+ 
+  let ticking = false;
+  let targetX = 0;
+  let targetY = 0;
+ 
+  function apply() {
+    ambient.style.transform = `translate(${targetX}px, ${targetY}px)`;
+    ticking = false;
+  }
+ 
+  function onPointerMove(e) {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1..1
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+    targetX = x * 22;
+    targetY = y * 22;
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(apply);
+    }
+  }
+ 
+  window.addEventListener("pointermove", onPointerMove, { passive: true });
+}
+ 
 const state = {
   activeIndex: 0,
   cards: [],
@@ -23,6 +124,8 @@ const state = {
 document.addEventListener("DOMContentLoaded", init);
  
 async function init() {
+  setupTheme();
+  setupParallax();
   try {
     const data = await fetch("data.json").then((res) => {
       if (!res.ok) throw new Error("data.json not found (status " + res.status + ")");
@@ -72,9 +175,22 @@ function populateMembers(members) {
  
     if (info.fullName && nameEl) nameEl.textContent = info.fullName;
  
-    const bar = document.createElement("div");
-    bar.className = "card-accent";
-    card.insertBefore(bar, card.firstChild);
+    // Avatar — real photo if provided, otherwise initials
+    const avatar = document.createElement(info.photo ? "img" : "div");
+    avatar.className = "card-avatar";
+    if (info.photo) {
+      avatar.src = info.photo;
+      avatar.alt = info.fullName || name;
+      avatar.onerror = () => {
+        const fallback = document.createElement("div");
+        fallback.className = "card-avatar";
+        fallback.textContent = initials(info.fullName || name);
+        avatar.replaceWith(fallback);
+      };
+    } else {
+      avatar.textContent = initials(info.fullName || name);
+    }
+    card.insertBefore(avatar, card.firstChild);
  
     if (info.role) {
       const role = document.createElement("p");
@@ -89,6 +205,25 @@ function populateMembers(members) {
       tagline.textContent = info.tagline;
       card.appendChild(tagline);
     }
+ 
+    // Download CV button
+    const cvBtn = document.createElement("a");
+    cvBtn.className = "card-cv";
+    cvBtn.innerHTML = `${cvIconSvg()}<span>${info.cvUrl ? "Download CV" : "CV coming soon"}</span>`;
+    if (info.cvUrl) {
+      cvBtn.href = info.cvUrl;
+      cvBtn.setAttribute("download", "");
+      cvBtn.addEventListener("click", (e) => e.stopPropagation());
+    } else {
+      cvBtn.href = "#";
+      cvBtn.classList.add("is-disabled");
+      cvBtn.setAttribute("aria-disabled", "true");
+      cvBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+    card.appendChild(cvBtn);
  
     if (info.link) {
       card.style.cursor = "pointer";
