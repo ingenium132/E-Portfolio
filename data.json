@@ -12,19 +12,19 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#E2725B",
+      "color": "#710A14",
       "photo": "",
       "cvUrl": ""
     },
     {
       "name": "Dela Cruz",
       "fullName": "Dela Cruz, Joshiel Leonil",
-      "role": "Role / Discipline",
-      "tagline": "Add a one-line tagline.",
+      "role": "Technical Director",
+      "tagline": "An error is a step closer to success.",
       "link": "",
-      "color": "#F0B23D",
-      "photo": "",
-      "cvUrl": ""
+      "color": "#E4AE1E",
+      "photo": "assets/dela_cruz/profile.jpg",
+      "cvUrl": "assets/dela_cruz/Joshiel Leonil Dela Cruz - Resume.pdf"
     },
     {
       "name": "Eclipse",
@@ -32,7 +32,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#F2609C",
+      "color": "#CF7381",
       "photo": "",
       "cvUrl": ""
     },
@@ -42,7 +42,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#1B2B6B",
+      "color": "#1A4D94",
       "photo": "",
       "cvUrl": ""
     },
@@ -52,7 +52,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#8B6EF2",
+      "color": "#711E7B",
       "photo": "",
       "cvUrl": ""
     },
@@ -62,7 +62,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C",
+      "color": "#444444",
       "photo": "",
       "cvUrl": ""
     },
@@ -72,7 +72,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C",
+      "color": "#444444",
       "photo": "",
       "cvUrl": ""
     },
@@ -82,7 +82,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#54545C",
+      "color": "#444444",
       "photo": "",
       "cvUrl": ""
     },
@@ -92,7 +92,7 @@
       "role": "Role / Discipline",
       "tagline": "Add a one-line tagline.",
       "link": "",
-      "color": "#E2725B",
+      "color": "#72090F",
       "photo": "",
       "cvUrl": ""
     }
@@ -100,18 +100,94 @@
   "albums": {
     "intro": "Add an intro line for the albums section, and list album items here once you have them."
   },
-  "contacts": {
-    "intro": "Add a line inviting people to reach out.",
-    "email": "hello@example.com",
-    "socials": [
-      {
-        "label": "Instagram",
-        "url": "#"
-      },
-      {
-        "label": "Behance",
-        "url": "#"
-      }
-    ]
-  }
+  "contacts": [
+    {
+      "name": "Ingenium Studio",
+      "role": "General Inquiries",
+      "intro": "Reach out about the collective as a whole — collaborations, features, or anything not specific to one member.",
+      "email": "ingenium.132@gmail.com",
+      "socials": [
+        {
+          "label": "Instagram",
+          "url": "#"
+        },
+        {
+          "label": "Behance",
+          "url": "#"
+        }
+      ]
+    },
+    {
+      "name": "Anatalio, Amber",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Amber.",
+      "email": "amber.anatalio@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Dela Cruz, Joshiel Leonil",
+      "role": "Technical Director",
+      "intro": "Add a line inviting people to reach out to Joshiel.",
+      "email": "joshiel.leonil.delacruz@gmail.com",
+      "socials": [
+        {
+          "label": "Instagram",
+          "url": "https://www.instagram.com/_leo.dlcrz_/"
+        },
+        {
+          "label": "LinkedIn",
+          "url": "https://www.linkedin.com/in/joshielleonildelacruz/"
+        }
+      ]
+    },
+    {
+      "name": "Eclipse, Kirsten Irish",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Kirsten.",
+      "email": "kirsten.eclipse@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Marcial, Gian Carlo",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Gian.",
+      "email": "gian.marcial@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Pinaroc, Grant Jethro",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Grant.",
+      "email": "grant.pinaroc@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Pimentel, Erin Jacob",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Jacob.",
+      "email": "jacob.pimentel@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Pimentel, Elijah Josh",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Josh.",
+      "email": "josh.pimentel@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Reyes, Wilson James",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Wilson.",
+      "email": "wilson.reyes@ingenium.studio",
+      "socials": []
+    },
+    {
+      "name": "Velasquez, Vincent Anghelo",
+      "role": "Role / Discipline",
+      "intro": "Add a line inviting people to reach out to Vincent.",
+      "email": "vincent.velasquez@ingenium.studio",
+      "socials": []
+    }
+  ]
 }

@@ -6,7 +6,19 @@ function hexToRgb(hex) {
   const r = (bigint >> 16) & 255;
   const g = (bigint >> 8) & 255;
   const b = bigint & 255;
+  return { r, g, b };
+}
+ 
+function hexToRgbString(hex) {
+  const { r, g, b } = hexToRgb(hex);
   return `${r}, ${g}, ${b}`;
+}
+ 
+// Picks readable ink (dark or light) for text sitting on a given paper color
+function contrastInk(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.58 ? "#2C2A2A" : "#FFF0F0";
 }
  
 const FALLBACK_TINT = "#FFA67A";
@@ -136,7 +148,7 @@ async function init() {
     populateAbout(data.about);
     populateMembers(data.members || []);
     populateAlbums(data.albums);
-    populateContacts(data.contacts);
+    populateContacts(data.contacts, data.members || []);
     setupCarousel();
     setupNavHighlighting();
   } catch (err) {
@@ -171,7 +183,8 @@ function populateMembers(members) {
     const info = members.find((m) => m.name === name) || {};
     const tint = info.color || FALLBACK_TINT;
     card.style.setProperty("--tint", tint);
-    card.style.setProperty("--tint-rgb", hexToRgb(tint));
+    card.style.setProperty("--tint-rgb", hexToRgbString(tint));
+    card.style.setProperty("--paper-ink", contrastInk(tint));
  
     if (info.fullName && nameEl) nameEl.textContent = info.fullName;
  
@@ -190,7 +203,11 @@ function populateMembers(members) {
     } else {
       avatar.textContent = initials(info.fullName || name);
     }
-    card.insertBefore(avatar, card.firstChild);
+ 
+    const avatarWrap = document.createElement("div");
+    avatarWrap.className = "card-avatar-wrap";
+    avatarWrap.appendChild(avatar);
+    card.insertBefore(avatarWrap, card.firstChild);
  
     if (info.role) {
       const role = document.createElement("p");
@@ -265,43 +282,77 @@ function populateAlbums(albums = {}) {
 /* Contacts                                                                 */
 /* ---------------------------------------------------------------------- */
  
-function populateContacts(contacts = {}) {
+function populateContacts(contacts = [], members = []) {
   const section = document.getElementById("contacts");
   if (!section) return;
  
-  const card = document.createElement("div");
-  card.className = "contacts-card";
+  const list = Array.isArray(contacts) ? contacts : [contacts];
  
-  if (contacts.intro) {
-    const intro = document.createElement("p");
-    intro.id = "contacts-intro";
-    intro.textContent = contacts.intro;
-    card.appendChild(intro);
-  }
+  const grid = document.createElement("div");
+  grid.className = "contacts-grid";
  
-  if (contacts.email) {
-    const email = document.createElement("a");
-    email.className = "contact-email";
-    email.href = `mailto:${contacts.email}`;
-    email.textContent = contacts.email;
-    card.appendChild(email);
-  }
+  list.forEach((entry) => {
+    const card = document.createElement("div");
+    card.className = "contacts-card";
  
-  if (contacts.socials && contacts.socials.length) {
-    const list = document.createElement("ul");
-    list.className = "contact-socials";
-    contacts.socials.forEach((s) => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = s.url;
-      a.textContent = s.label;
-      li.appendChild(a);
-      list.appendChild(li);
-    });
-    card.appendChild(list);
-  }
+    // Tint the card if this entry's name matches a member (the studio
+    // card won't match anything, so it stays neutral paper by default)
+    const match = members.find((m) => m.fullName === entry.name);
+    if (match && match.color) {
+      const tint = match.color;
+      card.classList.add("is-tinted");
+      card.style.setProperty("--tint", tint);
+      card.style.setProperty("--tint-rgb", hexToRgbString(tint));
+      card.style.setProperty("--paper-ink", contrastInk(tint));
+    }
  
-  section.appendChild(card);
+    if (entry.name) {
+      const name = document.createElement("h3");
+      name.className = "contact-card-name";
+      name.textContent = entry.name;
+      card.appendChild(name);
+    }
+ 
+    if (entry.role) {
+      const role = document.createElement("p");
+      role.className = "contact-card-role";
+      role.textContent = entry.role;
+      card.appendChild(role);
+    }
+ 
+    if (entry.intro) {
+      const intro = document.createElement("p");
+      intro.className = "contacts-intro";
+      intro.textContent = entry.intro;
+      card.appendChild(intro);
+    }
+ 
+    if (entry.email) {
+      const email = document.createElement("a");
+      email.className = "contact-email";
+      email.href = `mailto:${entry.email}`;
+      email.textContent = entry.email;
+      card.appendChild(email);
+    }
+ 
+    if (entry.socials && entry.socials.length) {
+      const socialList = document.createElement("ul");
+      socialList.className = "contact-socials";
+      entry.socials.forEach((s) => {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = s.url;
+        a.textContent = s.label;
+        li.appendChild(a);
+        socialList.appendChild(li);
+      });
+      card.appendChild(socialList);
+    }
+ 
+    grid.appendChild(card);
+  });
+ 
+  section.appendChild(grid);
 }
  
 /* ---------------------------------------------------------------------- */
